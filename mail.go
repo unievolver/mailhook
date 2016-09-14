@@ -74,10 +74,10 @@ func (hook *GoMailAuthHook) Fire(entry *logrus.Entry) error {
 	m.SetHeader("From", hook.From.Address)
 	m.SetHeader("To", hook.To.Address, hook.To.Address)
 	//m.SetAddressHeader("Cc", "dan@example.com", "Dan")
-	m.SetHeader("Subject", hook.AppName+" - "+entry.Level.String())
+	m.SetHeader("Subject", hook.AppName+" - "+entry.Level.String()+" - "+entry.Time.Format(format))
 	m.SetBody("text/html", entry.Time.Format(format)+" - "+entry.Message)
 
-	if err := hook.dialer.DialAndSend(); err != nil {
+	if err := hook.dialer.DialAndSend(m); err != nil {
 		return err
 	}
 	return nil
