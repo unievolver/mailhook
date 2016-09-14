@@ -12,7 +12,7 @@ The subject is of the form `APPLICATION_NAME - LEVEL` and the body contains the 
 Install the package with go:
 
 ```go
-go get github.com/dpatel06/logrus_gpmail
+go get github.com/dpatel06/logrus_gomail
 ```
 
 ## Usage
@@ -23,7 +23,7 @@ For `APPLICATION_NAME`, substitute a short string that will identify your applic
 import (
   "log/syslog"
   "github.com/Sirupsen/logrus"
-  "github.com/zbindenren/logrus_gpmail"
+  "github.com/zbindenren/logrus_gomail"
 )
 
 func main() {
