@@ -1,10 +1,9 @@
-package logrus_gomail
+package mailhook
 
 import (
-	"crypto/tls"
 	"net/mail"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/gomail.v2"
 )
 
@@ -20,76 +19,73 @@ var (
 	}
 )
 
-// MailAuthHook to sends logs by email with authentication.
-type GoMailAuthHook struct {
-	AppName  string
+// MailHook to sends logs by email with authentication.
+type MailHook struct {
 	Host     string
 	Port     int
-	From     *mail.Address
-	To       *mail.Address
 	Username string
 	Password string
+	From     *mail.Address
+	To       []*mail.Address
+	AppName  string
 	dialer   *gomail.Dialer
 	levels   []logrus.Level
 }
 
-// NewMailAuthHook creates a hook to be added to an instance of logger.
-func NewGoMailAuthHook(appname string, host string, port int, from string, to string, username string, password string) (*GoMailAuthHook, error) {
-
+// NewMailHook creates a hook to be added to an instance of logger.
+func NewMailHook(host string, port int, username string, password string, to string, appname string) (*MailHook, error) {
 	d := gomail.NewDialer(host, port, username, password)
-	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
-
 	dc, err := d.Dial()
 	if err != nil {
 		return nil, err
 	}
 	defer dc.Close()
-
 	// Validate sender and recipient
-	sender, err := mail.ParseAddress(from)
+	sender, err := mail.ParseAddress(username)
 	if err != nil {
 		return nil, err
 	}
-	receiver, err := mail.ParseAddress(to)
+	recipients, err := mail.ParseAddressList(to)
 	if err != nil {
 		return nil, err
 	}
-
-	return &GoMailAuthHook{
-		AppName:  appname,
+	return &MailHook{
 		Host:     host,
 		Port:     port,
 		From:     sender,
-		To:       receiver,
 		Username: username,
 		Password: password,
 		dialer:   d,
-		levels:   defaultLevels}, nil
+		levels:   defaultLevels,
+		To:       recipients,
+		AppName:  appname,
+	}, nil
 }
 
 // Fire is called when a log event is fired.
-func (hook *GoMailAuthHook) Fire(entry *logrus.Entry) error {
-
+func (hook *MailHook) Fire(entry *logrus.Entry) error {
+	var to []string
+	for _, v := range hook.To {
+		to = append(to, v.Address)
+	}
 	m := gomail.NewMessage()
 	m.SetHeader("From", hook.From.Address)
-	m.SetHeader("To", hook.To.Address, hook.To.Address)
+	m.SetHeader("To", to...)
 	//m.SetAddressHeader("Cc", "dan@example.com", "Dan")
 	m.SetHeader("Subject", hook.AppName+" - "+entry.Level.String()+" - "+entry.Time.Format(format))
 	m.SetBody("text/html", entry.Time.Format(format)+" - "+entry.Message)
-
 	if err := hook.dialer.DialAndSend(m); err != nil {
 		return err
 	}
 	return nil
-
 }
 
 // Levels returns the available logging levels.
-func (hook *GoMailAuthHook) SetLevels(levels []logrus.Level) {
+func (hook *MailHook) SetLevels(levels []logrus.Level) {
 	hook.levels = levels
 }
 
 // Levels returns the available logging levels.
-func (hook *GoMailAuthHook) Levels() []logrus.Level {
+func (hook *MailHook) Levels() []logrus.Level {
 	return hook.levels
 }

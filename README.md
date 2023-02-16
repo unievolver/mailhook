@@ -12,7 +12,8 @@ The subject is of the form `APPLICATION_NAME - LEVEL` and the body contains the 
 Install the package with go:
 
 ```go
-go get github.com/dpatel06/logrus_gomail
+go get gopkg.in/gomail.v2
+go get github.com/unievolver/mailhook
 ```
 
 ## Usage
@@ -22,17 +23,20 @@ For `APPLICATION_NAME`, substitute a short string that will identify your applic
 ```go
 import (
   "log/syslog"
-  "github.com/Sirupsen/logrus"
-  "github.com/dpatel06/logrus_gomail"
+  "github.com/sirupsen/logrus"
+  "github.com/unievolver/mailhook"
+  "gopkg.in/gomail.v2"
 )
 
 func main() {
   log       := logrus.New()
   // if you do not need authentication for your smtp host
-  hook, err := logrus_gomail.NewGoMailAuthHook("APPLICATION_NAME", "HOST", PORT, "FROM", "TO")
-
+  hook, err := mailhook.NewMailHook(
+	"HOST", PORT, "USERNAME", "PASSWORD",
+	"To", "APPLICATION_NAME",
+  )
   if err == nil {
-    log.Hooks.Add(hook)
+    log.AddHook(hook)
   }
 }
 ```
@@ -40,12 +44,15 @@ func main() {
 Example with authentication:
 ```go
   // if you need authentication for your smtp host
-  hook, err := logrus_gomail.NewGoMailAuthHook("APPLICATION_NAME", "HOST", PORT, "FROM", "TO", "USERNAME", "PASSWORD")
+  hook, err := mailhook.NewMailHook("HOST", PORT, "USERNAME", "PASSWORD", "TO", "APPLICATION_NAME")
 ```
 
-If you want to send mails with gmail:
+If you want to send mails with 163:
 ```go
- hook, err := logrus_gomail.NewGoMailAuthHook("testapp", "smtp.gmail.com", 587, "user.name@gmail.com", "user.name@gmail.com", "user.name", "password")
+ hook, err := mailhook.NewMailHook(
+	"smtp.163.com", 465, "user.name@163.com", "password",
+	"user.name@163.com", "testapp",
+	)
 ```
 
 
